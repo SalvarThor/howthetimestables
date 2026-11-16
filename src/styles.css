@@ -104,12 +104,12 @@ main { max-width: 440px; margin: 0 auto; padding: 16px; }
 .row { display: flex; gap: 8px; margin-top: 8px; }
 .hint { color: var(--muted); font-size: 0.9rem; }
 
-.table-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.table-picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .table-btn { background: var(--card); padding: 14px 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); border: 3px solid #e3e7ef; }
 .table-btn.on { background: var(--accent); color: white; border-color: var(--accent); }
 
-.grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; margin-top: 8px; }
-.cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; border-radius: 4px; padding: 0; color: var(--ink); }
+.grid { display: grid; gap: 2px; margin-top: 8px; }
+.cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 4px; padding: 0; color: var(--ink); }
 .cell.head { font-weight: 700; color: var(--muted); font-size: 0.8rem; }
 .m-new { background: var(--m-new); }
 .m-learning { background: var(--m-learning); }

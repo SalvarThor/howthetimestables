@@ -1,6 +1,8 @@
 // Pure game logic: no DOM, no storage. Tested in test/game.test.js.
 
-export const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// Tables 1 to 10, each multiplied by 1 to 10. Change MAX here and everything else follows.
+export const MAX = 10;
+export const ALL_TABLES = Array.from({ length: MAX }, (_, i) => i + 1);
 export const MAX_LEVEL = 5;
 export const FAST_MS = 6000; // a correct answer faster than this moves a fact up a level
 export const RETRY_AFTER = 3; // a missed fact comes back after this many other questions
@@ -13,7 +15,7 @@ export function factKey(a, b) {
 
 export function newState() {
   return {
-    tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    tables: ALL_TABLES.filter((t) => t >= 2),
     mode: "mixed", // "mixed" = random across selected tables, "ordered" = one table at a time
     tableRun: null, // ordered mode: { table, step, missed, firstTry }
     streak: 0,
@@ -29,6 +31,31 @@ export function newState() {
   };
 }
 
+// Brings saved data in line with the current MAX (e.g. progress saved when tables went up to 12).
+export function sanitizeState(state) {
+  const fresh = newState();
+  const ok = (n) => Number.isInteger(n) && n >= 1 && n <= MAX;
+  state.tables = Array.isArray(state.tables) ? state.tables.filter(ok) : fresh.tables;
+  if (state.tables.length === 0) state.tables = fresh.tables;
+  state.mode = state.mode === "ordered" ? "ordered" : "mixed";
+  const facts = {};
+  for (const [key, fact] of Object.entries(state.facts ?? {})) {
+    if (key.split("x").map(Number).every(ok)) facts[key] = fact;
+  }
+  state.facts = facts;
+  if (state.retry && !(ok(state.retry.a) && ok(state.retry.b))) state.retry = null;
+  const run = state.tableRun;
+  if (run) {
+    if (!ok(run.table) || !Array.isArray(run.missed)) state.tableRun = null;
+    else {
+      run.missed = run.missed.filter(ok);
+      run.step = Math.min(run.step, MAX + 1);
+      if (run.step > MAX && run.missed.length === 0) startTable(state, run.table); // finished; go again
+    }
+  }
+  return state;
+}
+
 // Weight by level: unseen and weak facts come up much more often.
 function weightFor(fact) {
   if (!fact) return 6;
@@ -39,7 +66,7 @@ export function candidates(tables) {
   const seen = new Set();
   const list = [];
   for (const t of tables) {
-    for (let n = 1; n <= 12; n++) {
+    for (let n = 1; n <= MAX; n++) {
       const key = factKey(t, n);
       if (seen.has(key)) continue;
       seen.add(key);
@@ -49,7 +76,7 @@ export function candidates(tables) {
   return list;
 }
 
-// ---------- Ordered mode: one table at a time, 1 to 12, then fix mistakes ----------
+// ---------- Ordered mode: one table at a time, 1 to MAX, then fix mistakes ----------
 
 export function startTable(state, table) {
   state.tableRun = { table, step: 1, missed: [], firstTry: 0 };
@@ -75,7 +102,7 @@ function ensureTableRun(state) {
 function advanceTableRun(state, question, correct) {
   const run = state.tableRun;
   if (!run || question.a !== run.table) return null; // question came from before a mode or table change
-  if (run.step <= 12) {
+  if (run.step <= MAX) {
     if (correct) run.firstTry += 1;
     else run.missed.push(question.b);
     run.step += 1;
@@ -83,7 +110,7 @@ function advanceTableRun(state, question, correct) {
     run.missed.shift();
     if (!correct) run.missed.push(question.b); // keep going until it's right
   }
-  if (run.step > 12 && run.missed.length === 0) {
+  if (run.step > MAX && run.missed.length === 0) {
     const done = { table: run.table, firstTry: run.firstTry };
     startTable(state, adjacentTable(state, run.table, 1));
     return done;
@@ -95,7 +122,7 @@ function advanceTableRun(state, question, correct) {
 export function pickQuestion(state, rng = Math.random) {
   if (state.mode === "ordered") {
     const run = ensureTableRun(state);
-    const n = run.step <= 12 ? run.step : run.missed[0];
+    const n = run.step <= MAX ? run.step : run.missed[0];
     return { a: run.table, b: n, key: factKey(run.table, n) };
   }
 

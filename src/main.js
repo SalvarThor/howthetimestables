@@ -1,5 +1,5 @@
 import {
-  ALL_TABLES, pickQuestion, recordAnswer, masteryOf, factKey, startTable, adjacentTable,
+  ALL_TABLES, MAX, pickQuestion, recordAnswer, masteryOf, factKey, startTable, adjacentTable,
 } from "./game.js";
 import { load, save, clear } from "./storage.js";
 
@@ -45,9 +45,9 @@ function renderTableBar() {
   const run = state.tableRun;
   if (state.mode !== "ordered" || !run) return;
   $("table-name").textContent = `${run.table} times table`;
-  if (run.step <= 12) {
-    $("table-progress").textContent = `Question ${run.step} of 12`;
-    $("progress-fill").style.width = `${((run.step - 1) / 12) * 100}%`;
+  if (run.step <= MAX) {
+    $("table-progress").textContent = `Question ${run.step} of ${MAX}`;
+    $("progress-fill").style.width = `${((run.step - 1) / MAX) * 100}%`;
   } else {
     const left = run.missed.length;
     $("table-progress").textContent = `Fixing mistakes: ${left} left`;
@@ -103,8 +103,8 @@ function submit() {
     let pause = 700;
     if (result.tableDone) {
       const { table, firstTry } = result.tableDone;
-      celebrate(`${table} times table done!`, `${firstTry} of 12 right first time`);
-      els.feedback.textContent = `${firstTry} of 12 right first time`;
+      celebrate(`${table} times table done!`, `${firstTry} of ${MAX} right first time`);
+      els.feedback.textContent = `${firstTry} of ${MAX} right first time`;
       $("table-name").textContent = `${table} times table`;
       $("table-progress").textContent = "All done!";
       $("progress-fill").style.width = "100%";
@@ -225,7 +225,7 @@ function renderProgress() {
     ? Math.round((state.totalCorrect / state.totalAnswered) * 100)
     : 0;
   const keys = new Set();
-  for (let a = 1; a <= 12; a++) for (let b = a; b <= 12; b++) keys.add(factKey(a, b));
+  for (let a = 1; a <= MAX; a++) for (let b = a; b <= MAX; b++) keys.add(factKey(a, b));
   const mastered = [...keys].filter((k) => masteryOf(state.facts[k]) === "mastered").length;
 
   $("totals").innerHTML = "";
@@ -245,11 +245,12 @@ function renderProgress() {
 
   const grid = $("grid");
   grid.innerHTML = "";
+  grid.style.gridTemplateColumns = `repeat(${MAX + 1}, 1fr)`;
   grid.appendChild(cell("×", "head"));
-  for (let b = 1; b <= 12; b++) grid.appendChild(cell(b, "head"));
-  for (let a = 1; a <= 12; a++) {
+  for (let b = 1; b <= MAX; b++) grid.appendChild(cell(b, "head"));
+  for (let a = 1; a <= MAX; a++) {
     grid.appendChild(cell(a, "head"));
-    for (let b = 1; b <= 12; b++) {
+    for (let b = 1; b <= MAX; b++) {
       const fact = state.facts[factKey(a, b)];
       const c = cell(a * b, `m-${masteryOf(fact)}`);
       c.addEventListener("click", () => showFact(a, b, fact));

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  newState, pickQuestion, recordAnswer, factKey, candidates, masteryOf, RETRY_AFTER, adjacentTable,
+  newState, pickQuestion, recordAnswer, factKey, candidates, masteryOf, RETRY_AFTER, adjacentTable, MAX, ALL_TABLES, sanitizeState,
 } from "../src/game.js";
 
 test("factKey treats 3x7 and 7x3 as the same fact", () => {
@@ -9,7 +9,7 @@ test("factKey treats 3x7 and 7x3 as the same fact", () => {
 });
 
 test("candidates are deduplicated across tables", () => {
-  assert.equal(candidates([3, 7]).length, 23); // 12 + 12 - shared 3x7
+  assert.equal(candidates([3, 7]).length, 2 * MAX - 1); // minus the shared 3x7
 });
 
 test("questions only come from selected tables", () => {
@@ -18,7 +18,7 @@ test("questions only come from selected tables", () => {
   for (let i = 0; i < 200; i++) {
     const q = pickQuestion(s);
     assert.ok(q.a === 7 || q.b === 7);
-    assert.ok(q.a >= 1 && q.a <= 12 && q.b >= 1 && q.b <= 12);
+    assert.ok(q.a >= 1 && q.a <= MAX && q.b >= 1 && q.b <= MAX);
     s.lastKey = q.key;
   }
 });
@@ -108,19 +108,19 @@ function answerOrdered(s, rightFor = () => true) {
   return { q, r };
 }
 
-test("ordered mode asks a table from 1 to 12 in order, then moves to the next table", () => {
+test("ordered mode asks a table from 1 to MAX in order, then moves to the next table", () => {
   const s = newState();
   s.mode = "ordered";
   s.tables = [3, 7];
   const asked = [];
   let done = null;
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < MAX; i++) {
     const { q, r } = answerOrdered(s);
     asked.push([q.a, q.b]);
     done = r.tableDone;
   }
-  assert.deepEqual(asked, Array.from({ length: 12 }, (_, i) => [3, i + 1]));
-  assert.deepEqual(done, { table: 3, firstTry: 12 });
+  assert.deepEqual(asked, Array.from({ length: MAX }, (_, i) => [3, i + 1]));
+  assert.deepEqual(done, { table: 3, firstTry: MAX });
   assert.deepEqual([pickQuestion(s).a, pickQuestion(s).b], [7, 1]);
 });
 
@@ -139,8 +139,8 @@ test("ordered mode re-asks missed questions at the end until right", () => {
     asked.push(q.b);
     done = r.tableDone;
   }
-  assert.deepEqual(asked, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 5, 9]);
-  assert.deepEqual(done, { table: 4, firstTry: 10 });
+  assert.deepEqual(asked, [...Array.from({ length: MAX }, (_, i) => i + 1), 5, 9]);
+  assert.deepEqual(done, { table: 4, firstTry: MAX - 2 });
   // Only one table selected: wraps round to it again.
   assert.deepEqual([pickQuestion(s).a, pickQuestion(s).b], [4, 1]);
 });
@@ -161,4 +161,36 @@ test("adjacentTable wraps round the selected tables", () => {
   assert.equal(adjacentTable(s, 9, 1), 2);
   assert.equal(adjacentTable(s, 2, -1), 9);
   assert.equal(adjacentTable(s, 5, 1), 9);
+});
+
+test("tables and multipliers stop at 10", () => {
+  assert.equal(MAX, 10);
+  assert.deepEqual(ALL_TABLES, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const s = newState();
+  s.tables = [...ALL_TABLES];
+  for (let i = 0; i < 500; i++) {
+    const q = pickQuestion(s);
+    assert.ok(q.a <= 10 && q.b <= 10, `${q.a}x${q.b}`);
+    s.lastKey = q.key;
+  }
+});
+
+test("old saved data with 11s and 12s is cleaned up", () => {
+  const s = sanitizeState({
+    ...newState(),
+    tables: [2, 7, 11, 12],
+    facts: { "3x4": { level: 2, seen: 1, correct: 1, wrong: 0 }, "7x12": { level: 1, seen: 1, correct: 1, wrong: 0 } },
+    retry: { a: 11, b: 3, wait: 2 },
+    mode: "ordered",
+    tableRun: { table: 7, step: 12, missed: [3, 11], firstTry: 9 },
+  });
+  assert.deepEqual(s.tables, [2, 7]);
+  assert.deepEqual(Object.keys(s.facts), ["3x4"]);
+  assert.equal(s.retry, null);
+  assert.deepEqual(s.tableRun, { table: 7, step: 11, missed: [3], firstTry: 9 });
+  assert.deepEqual([pickQuestion(s).a, pickQuestion(s).b], [7, 3]);
+
+  const onlyBig = sanitizeState({ ...newState(), tables: [11, 12], tableRun: { table: 12, step: 3, missed: [], firstTry: 2 } });
+  assert.deepEqual(onlyBig.tables, newState().tables);
+  assert.equal(onlyBig.tableRun, null);
 });

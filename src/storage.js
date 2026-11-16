@@ -1,4 +1,4 @@
-import { newState, ALL_TABLES } from "./game.js";
+import { newState, sanitizeState } from "./game.js";
 
 const KEY = "howthetimestables.v1";
 
@@ -7,12 +7,7 @@ export function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY));
     if (!saved || typeof saved !== "object") return fresh;
-    const state = { ...fresh, ...saved };
-    state.tables = Array.isArray(state.tables)
-      ? state.tables.filter((t) => ALL_TABLES.includes(t))
-      : fresh.tables;
-    if (state.tables.length === 0) state.tables = fresh.tables;
-    return state;
+    return sanitizeState({ ...fresh, ...saved });
   } catch {
     return fresh;
   }
