@@ -2,12 +2,24 @@
 
 A small browser game for practising multiplication tables. It asks random questions and tracks streaks and progress.
 
-## Planned features
+## How it works
 
-- Random questions from selected tables (e.g. 2-12)
-- Current streak and best streak
-- Per-fact tracking, so tricky facts come up more often
-- Progress saved in the browser (localStorage), no account or server
+- **Questions** come from the tables picked in Settings (2 to 12 by default), multiplied by 1 to 12. The same fact is never asked twice in a row.
+- **Weak facts come up more.** Each fact has a level from 0 to 5. A correct answer in under 6 seconds moves it up one level; a wrong answer drops it to 0. Lower levels and untried facts are picked much more often. 3x7 and 7x3 count as the same fact.
+- **Missed facts come back.** After a wrong answer, the correct answer is shown, and the same question returns after 3 others.
+- **Streaks:** current streak, best streak, and days played in a row. Celebrations at 5, 10, 15, 20, 25, 30, 40, 50, 75 and 100 in a row, and when a run beats the previous best.
+- **Progress tab:** a 12x12 grid coloured by mastery (Not tried, Learning, Nearly, Got it), plus totals and accuracy. Tap a square for that fact's record.
+- **Saved in the browser** (localStorage) on that device only. No account or server. Settings has a reset button.
+
+Works with the on-screen keypad (phones and tablets) or a keyboard (digits, Backspace, Enter).
+
+## Tests
+
+Game logic in `src/game.js` has no DOM dependencies and is tested with Node's built-in test runner (Node 22+, no install needed):
+
+```bash
+npm test
+```
 
 ## Running locally
 

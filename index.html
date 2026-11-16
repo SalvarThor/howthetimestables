@@ -2,15 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Times Tables</title>
   <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
-  <main id="app">
+  <header>
     <h1>Times Tables</h1>
-    <p>Game coming soon.</p>
+    <nav>
+      <button class="tab active" data-view="play">Play</button>
+      <button class="tab" data-view="progress">Progress</button>
+      <button class="tab" data-view="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-play" class="view">
+      <div class="scores">
+        <div class="score"><span class="label">Streak</span><span id="streak" class="value">0</span></div>
+        <div class="score"><span class="label">Best</span><span id="best" class="value">0</span></div>
+        <div class="score"><span class="label">Days in a row</span><span id="days" class="value">0</span></div>
+      </div>
+
+      <div id="card" class="card">
+        <div id="question" class="question"></div>
+        <div id="answer" class="answer" aria-live="polite"></div>
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+      </div>
+
+      <div id="keypad" class="keypad">
+        <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+        <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+        <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+        <button data-key="back" class="secondary" aria-label="Delete">&#9003;</button>
+        <button data-key="0">0</button>
+        <button data-key="enter" class="go">Go</button>
+      </div>
+    </section>
+
+    <section id="view-progress" class="view hidden">
+      <div class="totals" id="totals"></div>
+      <p class="hint">Each square is one fact. Tap a square to see how it's going.</p>
+      <div id="grid" class="grid"></div>
+      <div class="legend">
+        <span><i class="m-new"></i>Not tried</span>
+        <span><i class="m-learning"></i>Learning</span>
+        <span><i class="m-nearly"></i>Nearly</span>
+        <span><i class="m-mastered"></i>Got it</span>
+      </div>
+      <p id="fact-detail" class="fact-detail"></p>
+    </section>
+
+    <section id="view-settings" class="view hidden">
+      <h2>Which tables?</h2>
+      <div id="table-picker" class="table-picker"></div>
+      <div class="row">
+        <button id="select-all" class="secondary">All</button>
+        <button id="select-none" class="secondary">None</button>
+      </div>
+      <p id="settings-msg" class="hint"></p>
+      <h2>Start over</h2>
+      <p class="hint">Clears streaks and progress on this device.</p>
+      <button id="reset" class="danger">Reset progress</button>
+    </section>
   </main>
+
+  <div id="celebrate" class="celebrate hidden"></div>
+
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
