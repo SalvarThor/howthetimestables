@@ -184,14 +184,39 @@ document.querySelectorAll("#keypad button").forEach((btn) => {
   btn.addEventListener("click", () => press(btn.dataset.key));
 });
 
+// Physical keyboard. Uses e.code for the number pad so it works whether Num Lock is on or off.
+function keyFor(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return null; // leave browser shortcuts alone
+  const pad = /^Numpad([0-9])$/.exec(e.code);
+  if (pad) return pad[1];
+  if (/^[0-9]$/.test(e.key)) return e.key;
+  if (e.key === "Enter" || e.code === "NumpadEnter") return "enter";
+  if (e.key === "Backspace" || e.key === "Delete") return "back";
+  if (e.key === "Escape") return "clear";
+  return null;
+}
+
 document.addEventListener("keydown", (e) => {
   if ($("view-play").classList.contains("hidden")) return;
-  if (/^[0-9]$/.test(e.key)) press(e.key);
-  else if (e.key === "Backspace") press("back");
-  else if (e.key === "Enter") press("enter");
-  else return;
+  const key = keyFor(e);
+  if (!key) return;
   e.preventDefault();
+  if (key === "clear") {
+    while (typed) press("back");
+    return;
+  }
+  if (e.repeat && key === "enter") return; // holding Enter shouldn't skip through questions
+  press(key);
+  flashKey(key);
 });
+
+// Show the on-screen key being pressed, so typing feels connected to the keypad.
+function flashKey(key) {
+  const btn = document.querySelector(`#keypad [data-key="${key}"]`);
+  if (!btn) return;
+  btn.classList.add("pressed");
+  setTimeout(() => btn.classList.remove("pressed"), 120);
+}
 
 // ---------- Progress ----------
 

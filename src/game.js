@@ -165,8 +165,7 @@ export function recordAnswer(state, question, answer, ms, today = localDay()) {
 
   if (correct) {
     fact.correct += 1;
-    // Counting up a table in order is easier than a random question, so only mixed mode builds mastery.
-    if (ms < FAST_MS && state.mode !== "ordered") fact.level = Math.min(MAX_LEVEL, fact.level + 1);
+    if (ms < FAST_MS) fact.level = Math.min(MAX_LEVEL, fact.level + 1);
     state.totalCorrect += 1;
     if (state.streak === 0) state.bestAtRunStart = state.bestStreak;
     state.streak += 1;

@@ -93,7 +93,9 @@ main { max-width: 440px; margin: 0 auto; padding: 16px; }
   padding: 14px 0;
   box-shadow: 0 2px 0 #d3d9e5;
 }
-.keypad button:active { transform: translateY(2px); box-shadow: none; }
+.keypad button:active, .keypad button.pressed { transform: translateY(2px); box-shadow: none; }
+.keyboard-hint { display: none; text-align: center; margin-top: 12px; }
+@media (hover: hover) and (pointer: fine) { .keyboard-hint { display: block; } }
 .keypad .secondary { color: var(--muted); }
 .keypad .go { background: var(--accent); color: white; box-shadow: 0 2px 0 #2a52bf; }
 

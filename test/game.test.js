@@ -145,12 +145,12 @@ test("ordered mode re-asks missed questions at the end until right", () => {
   assert.deepEqual([pickQuestion(s).a, pickQuestion(s).b], [4, 1]);
 });
 
-test("ordered mode does not raise mastery, and does not use the mixed-mode retry", () => {
+test("ordered mode raises mastery, and does not use the mixed-mode retry", () => {
   const s = newState();
   s.mode = "ordered";
   s.tables = [6];
   answerOrdered(s);
-  assert.equal(s.facts[factKey(6, 1)].level, 0);
+  assert.equal(s.facts[factKey(6, 1)].level, 1);
   answerOrdered(s, () => false);
   assert.equal(s.retry, null);
 });

@@ -7,7 +7,7 @@ A small browser game for practising multiplication tables. It asks random questi
 There are two ways to play, switched at the top of the Play screen:
 
 - **Mixed up:** random questions from all selected tables, weighted towards weak facts (details below).
-- **One table at a time:** works through a table in order, 1 to 12, then re-asks any missed questions until they're right. When the table is done, it shows how many were right first time and moves on to the next selected table (lowest to highest, wrapping round). The arrows either side of the table name skip forwards or back. Progress through the current table is saved. Answers here count towards streaks and the progress grid, but don't raise a fact's mastery level, because counting up a table in order is easier than a random question. Wrong answers still drop it.
+- **One table at a time:** works through a table in order, 1 to 12, then re-asks any missed questions until they're right. When the table is done, it shows how many were right first time and moves on to the next selected table (lowest to highest, wrapping round). The arrows either side of the table name skip forwards or back. Progress through the current table is saved. Answers count towards streaks and mastery the same way as in mixed mode.
 
 Mixed-up mode in detail:
 
@@ -18,7 +18,7 @@ Mixed-up mode in detail:
 - **Progress tab:** a 12x12 grid coloured by mastery (Not tried, Learning, Nearly, Got it), plus totals and accuracy. Tap a square for that fact's record.
 - **Saved in the browser** (localStorage) on that device only. No account or server. Settings has a reset button.
 
-Works with the on-screen keypad (phones and tablets) or a keyboard (digits, Backspace, Enter).
+Works with the on-screen keypad (phones and tablets) or a keyboard: number keys or number pad, Enter to answer, Backspace or Delete to fix a digit, Escape to clear.
 
 ## Tests
 
