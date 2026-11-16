@@ -52,6 +52,19 @@ main { max-width: 440px; margin: 0 auto; padding: 16px; }
 .score .label { display: block; font-size: 0.75rem; color: var(--muted); }
 .score .value { display: block; font-size: 1.5rem; font-weight: 700; }
 
+
+.mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #e3e7ef; padding: 4px; border-radius: 12px; margin-top: 12px; }
+.mode-btn { background: transparent; padding: 8px 4px; color: var(--muted); font-weight: 600; font-size: 0.95rem; }
+.mode-btn.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); }
+
+.table-bar { display: flex; align-items: center; gap: 8px; margin-top: 12px; background: var(--card); border-radius: 12px; padding: 8px; }
+.table-bar .arrow { background: #e3e7ef; color: var(--muted); width: 40px; height: 40px; font-size: 1rem; flex: none; }
+.table-info { flex: 1; text-align: center; }
+.table-name { font-weight: 700; font-size: 1.1rem; }
+.table-progress { font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+.progress-track { height: 8px; background: #e3e7ef; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; }
+
 .card {
   background: var(--card);
   border-radius: 20px;
@@ -107,10 +120,13 @@ main { max-width: 440px; margin: 0 auto; padding: 16px; }
 
 .celebrate { position: fixed; inset: 0; pointer-events: none; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .celebrate-text {
-  font-size: 2.6rem; font-weight: 800; color: var(--accent);
-  background: rgb(255 255 255 / 0.92); padding: 12px 24px; border-radius: 16px;
+  font-size: 2.2rem; font-weight: 800; color: var(--accent);
+  background: rgb(255 255 255 / 0.96); padding: 12px 24px; border-radius: 16px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  max-width: 90vw; text-align: center; line-height: 1.15;
   animation: pop 0.4s ease-out;
 }
+.celebrate-sub { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-top: 6px; }
 .particle { position: absolute; top: -40px; font-size: 1.8rem; animation: fall 1.5s ease-in forwards; }
 
 @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }

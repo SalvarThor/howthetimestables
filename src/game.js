@@ -14,6 +14,8 @@ export function factKey(a, b) {
 export function newState() {
   return {
     tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    mode: "mixed", // "mixed" = random across selected tables, "ordered" = one table at a time
+    tableRun: null, // ordered mode: { table, step, missed, firstTry }
     streak: 0,
     bestStreak: 0,
     bestAtRunStart: 0,
@@ -47,8 +49,56 @@ export function candidates(tables) {
   return list;
 }
 
+// ---------- Ordered mode: one table at a time, 1 to 12, then fix mistakes ----------
+
+export function startTable(state, table) {
+  state.tableRun = { table, step: 1, missed: [], firstTry: 0 };
+}
+
+// The selected table after (or before, with dir = -1) the given one, wrapping round.
+export function adjacentTable(state, table, dir = 1) {
+  const tables = [...state.tables].sort((x, y) => x - y);
+  if (tables.length === 0) return null;
+  const i = tables.indexOf(table);
+  if (i === -1) return dir > 0 ? (tables.find((t) => t > table) ?? tables[0]) : tables[tables.length - 1];
+  return tables[(i + dir + tables.length) % tables.length];
+}
+
+function ensureTableRun(state) {
+  if (!state.tableRun || !state.tables.includes(state.tableRun.table)) {
+    startTable(state, Math.min(...state.tables));
+  }
+  return state.tableRun;
+}
+
+// Updates the run after an answer. Returns { table, firstTry } when the table is finished.
+function advanceTableRun(state, question, correct) {
+  const run = state.tableRun;
+  if (!run || question.a !== run.table) return null; // question came from before a mode or table change
+  if (run.step <= 12) {
+    if (correct) run.firstTry += 1;
+    else run.missed.push(question.b);
+    run.step += 1;
+  } else {
+    run.missed.shift();
+    if (!correct) run.missed.push(question.b); // keep going until it's right
+  }
+  if (run.step > 12 && run.missed.length === 0) {
+    const done = { table: run.table, firstTry: run.firstTry };
+    startTable(state, adjacentTable(state, run.table, 1));
+    return done;
+  }
+  return null;
+}
+
 // Returns { a, b, key }. Mutates state.retry countdown.
 export function pickQuestion(state, rng = Math.random) {
+  if (state.mode === "ordered") {
+    const run = ensureTableRun(state);
+    const n = run.step <= 12 ? run.step : run.missed[0];
+    return { a: run.table, b: n, key: factKey(run.table, n) };
+  }
+
   if (state.retry) {
     if (state.retry.wait <= 0) {
       const { a, b } = state.retry;
@@ -94,7 +144,7 @@ export function localDay(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-// Records an answer and returns { correct, expected, milestone, newBest }.
+// Records an answer and returns { correct, expected, milestone, newBest, tableDone }.
 export function recordAnswer(state, question, answer, ms, today = localDay()) {
   const expected = question.a * question.b;
   const correct = Number(answer) === expected;
@@ -115,7 +165,8 @@ export function recordAnswer(state, question, answer, ms, today = localDay()) {
 
   if (correct) {
     fact.correct += 1;
-    if (ms < FAST_MS) fact.level = Math.min(MAX_LEVEL, fact.level + 1);
+    // Counting up a table in order is easier than a random question, so only mixed mode builds mastery.
+    if (ms < FAST_MS && state.mode !== "ordered") fact.level = Math.min(MAX_LEVEL, fact.level + 1);
     state.totalCorrect += 1;
     if (state.streak === 0) state.bestAtRunStart = state.bestStreak;
     state.streak += 1;
@@ -129,11 +180,13 @@ export function recordAnswer(state, question, answer, ms, today = localDay()) {
     fact.wrong += 1;
     fact.level = 0;
     state.streak = 0;
-    state.retry = { a: question.a, b: question.b, wait: RETRY_AFTER };
+    if (state.mode !== "ordered") state.retry = { a: question.a, b: question.b, wait: RETRY_AFTER };
   }
 
+  const tableDone = state.mode === "ordered" ? advanceTableRun(state, question, correct) : null;
+
   state.facts[question.key] = fact;
-  return { correct, expected, milestone, newBest };
+  return { correct, expected, milestone, newBest, tableDone };
 }
 
 // "new" | "learning" | "nearly" | "mastered"

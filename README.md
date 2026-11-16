@@ -4,6 +4,13 @@ A small browser game for practising multiplication tables. It asks random questi
 
 ## How it works
 
+There are two ways to play, switched at the top of the Play screen:
+
+- **Mixed up:** random questions from all selected tables, weighted towards weak facts (details below).
+- **One table at a time:** works through a table in order, 1 to 12, then re-asks any missed questions until they're right. When the table is done, it shows how many were right first time and moves on to the next selected table (lowest to highest, wrapping round). The arrows either side of the table name skip forwards or back. Progress through the current table is saved. Answers here count towards streaks and the progress grid, but don't raise a fact's mastery level, because counting up a table in order is easier than a random question. Wrong answers still drop it.
+
+Mixed-up mode in detail:
+
 - **Questions** come from the tables picked in Settings (2 to 12 by default), multiplied by 1 to 12. The same fact is never asked twice in a row.
 - **Weak facts come up more.** Each fact has a level from 0 to 5. A correct answer in under 6 seconds moves it up one level; a wrong answer drops it to 0. Lower levels and untried facts are picked much more often. 3x7 and 7x3 count as the same fact.
 - **Missed facts come back.** After a wrong answer, the correct answer is shown, and the same question returns after 3 others.

@@ -24,6 +24,21 @@
         <div class="score"><span class="label">Days in a row</span><span id="days" class="value">0</span></div>
       </div>
 
+      <div class="mode-switch" role="group" aria-label="How to play">
+        <button class="mode-btn" data-mode="mixed">Mixed up</button>
+        <button class="mode-btn" data-mode="ordered">One table at a time</button>
+      </div>
+
+      <div id="table-bar" class="table-bar hidden">
+        <button id="prev-table" class="arrow" aria-label="Previous table">&#9664;</button>
+        <div class="table-info">
+          <div id="table-name" class="table-name"></div>
+          <div id="table-progress" class="table-progress"></div>
+          <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+        </div>
+        <button id="next-table" class="arrow" aria-label="Next table">&#9654;</button>
+      </div>
+
       <div id="card" class="card">
         <div id="question" class="question"></div>
         <div id="answer" class="answer" aria-live="polite"></div>
@@ -55,6 +70,7 @@
 
     <section id="view-settings" class="view hidden">
       <h2>Which tables?</h2>
+      <p class="hint">In "One table at a time", these are worked through from lowest to highest.</p>
       <div id="table-picker" class="table-picker"></div>
       <div class="row">
         <button id="select-all" class="secondary">All</button>

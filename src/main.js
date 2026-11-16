@@ -1,4 +1,6 @@
-import { ALL_TABLES, pickQuestion, recordAnswer, masteryOf, factKey } from "./game.js";
+import {
+  ALL_TABLES, pickQuestion, recordAnswer, masteryOf, factKey, startTable, adjacentTable,
+} from "./game.js";
 import { load, save, clear } from "./storage.js";
 
 let state = load();
@@ -30,6 +32,29 @@ function renderScores() {
   els.days.textContent = state.dayStreak;
 }
 
+function renderMode() {
+  document.querySelectorAll(".mode-btn").forEach((b) => {
+    const on = b.dataset.mode === state.mode;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on);
+  });
+  $("table-bar").classList.toggle("hidden", state.mode !== "ordered" || state.tables.length === 0);
+}
+
+function renderTableBar() {
+  const run = state.tableRun;
+  if (state.mode !== "ordered" || !run) return;
+  $("table-name").textContent = `${run.table} times table`;
+  if (run.step <= 12) {
+    $("table-progress").textContent = `Question ${run.step} of 12`;
+    $("progress-fill").style.width = `${((run.step - 1) / 12) * 100}%`;
+  } else {
+    const left = run.missed.length;
+    $("table-progress").textContent = `Fixing mistakes: ${left} left`;
+    $("progress-fill").style.width = "100%";
+  }
+}
+
 function nextQuestion() {
   waitingForNext = false;
   busy = false;
@@ -39,12 +64,15 @@ function nextQuestion() {
 
   if (state.tables.length === 0) {
     question = null;
+    renderMode();
     els.question.textContent = "Pick some tables in Settings";
     els.answer.textContent = "";
     return;
   }
 
   question = pickQuestion(state);
+  renderMode();
+  renderTableBar();
   els.question.textContent = `${question.a} × ${question.b}`;
   renderAnswer();
   startedAt = performance.now();
@@ -72,15 +100,31 @@ function submit() {
     busy = true;
     els.card.className = "card right";
     els.feedback.textContent = PRAISE[Math.floor(Math.random() * PRAISE.length)];
-    if (result.milestone) celebrate(`${result.milestone} in a row!`);
-    else if (result.newBest) celebrate("New best!");
-    setTimeout(nextQuestion, result.milestone || result.newBest ? 1400 : 700);
+    let pause = 700;
+    if (result.tableDone) {
+      const { table, firstTry } = result.tableDone;
+      celebrate(`${table} times table done!`, `${firstTry} of 12 right first time`);
+      els.feedback.textContent = `${firstTry} of 12 right first time`;
+      $("table-name").textContent = `${table} times table`;
+      $("table-progress").textContent = "All done!";
+      $("progress-fill").style.width = "100%";
+      pause = 2200;
+    } else if (result.milestone) {
+      celebrate(`${result.milestone} in a row!`);
+      pause = 1400;
+    } else if (result.newBest) {
+      celebrate("New best!");
+      pause = 1400;
+    }
+    setTimeout(nextQuestion, pause);
   } else {
     waitingForNext = true;
     els.card.className = "card wrong";
     els.answer.textContent = result.expected;
     els.answer.classList.remove("empty");
-    els.feedback.textContent = `${question.a} × ${question.b} = ${result.expected}. Press Go to carry on.`;
+    const later = state.mode === "ordered" ? " We'll come back to it at the end." : "";
+    els.feedback.textContent = `${question.a} × ${question.b} = ${result.expected}.${later} Press Go to carry on.`;
+    renderTableBar();
   }
 }
 
@@ -92,12 +136,18 @@ function press(key) {
   renderAnswer();
 }
 
-function celebrate(text) {
+function celebrate(text, subtext = "") {
   const icons = ["⭐", "🎉", "🔥", "✨", "🏆"];
   els.celebrate.innerHTML = "";
   const msg = document.createElement("div");
   msg.className = "celebrate-text";
   msg.textContent = text;
+  if (subtext) {
+    const sub = document.createElement("div");
+    sub.className = "celebrate-sub";
+    sub.textContent = subtext;
+    msg.appendChild(sub);
+  }
   els.celebrate.appendChild(msg);
   for (let i = 0; i < 24; i++) {
     const p = document.createElement("span");
@@ -110,6 +160,25 @@ function celebrate(text) {
   els.celebrate.classList.remove("hidden");
   setTimeout(() => els.celebrate.classList.add("hidden"), 1600);
 }
+
+document.querySelectorAll(".mode-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (state.mode === btn.dataset.mode) return;
+    state.mode = btn.dataset.mode;
+    state.retry = null;
+    save(state);
+    nextQuestion();
+  });
+});
+
+function switchTable(dir) {
+  if (!state.tableRun) return;
+  startTable(state, adjacentTable(state, state.tableRun.table, dir));
+  save(state);
+  nextQuestion();
+}
+$("prev-table").addEventListener("click", () => switchTable(-1));
+$("next-table").addEventListener("click", () => switchTable(1));
 
 document.querySelectorAll("#keypad button").forEach((btn) => {
   btn.addEventListener("click", () => press(btn.dataset.key));
@@ -218,10 +287,10 @@ $("select-none").addEventListener("click", () => {
 });
 $("reset").addEventListener("click", () => {
   if (!confirm("Reset all streaks and progress on this device?")) return;
-  const tables = state.tables;
+  const { tables, mode } = state;
   clear();
   state = load();
-  state.tables = tables;
+  Object.assign(state, { tables, mode });
   save(state);
   renderScores();
   renderSettings();
